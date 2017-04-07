@@ -99,7 +99,7 @@ const STORE = {
 /*****************************************************************************/
 
 // App factory
-const App = () => {
+function App() {
   // Returns a new instance of the PIXI.Application class. 
   // PIXI.Application is a convenience super class
   const app = new PIXI.Application(800, 600, {backgroundColor : 0xffffff});
@@ -149,7 +149,7 @@ const App = () => {
   });
   // factor
   return app;
-};
+}
 
 /*****************************************************************************/
 
@@ -159,7 +159,7 @@ const base = App();
 /*****************************************************************************/
 
 // Clearer/Stager
-const clearAndStage = (...newChildren) => {  // rest parameters
+function clearAndStage(...newChildren) {  // rest parameters
   // Clears the entire stage and adds new children.
   // disabling updateTransform()
   base.stage.children
@@ -172,28 +172,28 @@ const clearAndStage = (...newChildren) => {  // rest parameters
   base.stage.removeChildren();
   // add new children
   if (newChildren.length > 0) base.stage.addChild(...newChildren);  // spread op
-};
+}
 
 /*****************************************************************************/
 
 // Sets stores
-const setLocalStores = s => {
+function setLocalStores(s) {
   window.localStorage.setItem('chickenchop', s);
   STORE.NAME = s;
-};
+}
 
 /*****************************************************************************/
 
 // Gets localStorage
-const getLocalStorage = () => {
+function getLocalStorage() {
   const name = window.localStorage.getItem('chickenchop');
   return name === null ? '' : name;
-};
+}
 
 /*****************************************************************************/
 
 // Start screen factory
-const Start = (app=base.renderer) => {
+function Start(app=base.renderer) {
   // Returns a new instance of the Start screen.
   const inst = {
     container : new PIXI.Container(),
@@ -207,7 +207,7 @@ const Start = (app=base.renderer) => {
     input     : new PixiTextInput(getLocalStorage(), FONT.S, 
                                   s => {
                                     setLocalStores(s);
-                                    clearAndStage(Levels());
+                                    clearAndStage(levels);
                                   }),
     start     : new PIXI.Text('START', FONT.M),
     exit      : new PIXI.Text('EXIT', FONT.M)
@@ -256,12 +256,12 @@ const Start = (app=base.renderer) => {
                            inst.exit);
   // factor
   return inst.container;
-};
+}
 
 /*****************************************************************************/
 
 // Pause screen factory
-const Pause = (app=base.renderer) => {
+function Pause(app=base.renderer) {
   // Returns a new instance of the Pause screen.
   const inst = {
     container : new PIXI.Container(),
@@ -298,7 +298,7 @@ const Pause = (app=base.renderer) => {
   inst.container.addChild(inst.text, inst.play, inst.exit);
   // factor
   return inst.container;
-};
+}
 
 /*****************************************************************************/
 
@@ -308,7 +308,7 @@ const pause = Pause();
 /*****************************************************************************/
 
 // Pause screen helper
-const startPause = (pause) => {
+function startPause(pause) {
   base.stage.children.forEach(c => {
     if (c.chicken || c.bullet) {
       c.stop();
@@ -316,12 +316,12 @@ const startPause = (pause) => {
     }
   });
   base.stage.addChild(pause);
-};
+}
 
 /*****************************************************************************/
 
 // Pause screen helper
-const endPause = (pause) => {
+function endPause(pause) {
   base.stage.children.forEach(c => {
     if (c.chicken || c.bullet) {
       c.play();
@@ -329,12 +329,12 @@ const endPause = (pause) => {
     }
   });
   base.stage.removeChild(pause);
-};
+}
 
 /*****************************************************************************/
 
 // Scoreboard factory
-const Scoreboard = (app=base.renderer) => {
+function Scoreboard(app=base.renderer) {
   // Returns a new instance of the Scoreboard.
   const inst = {
     container : new PIXI.Graphics(),
@@ -386,17 +386,17 @@ const Scoreboard = (app=base.renderer) => {
   inst.container.addChild(inst.info, inst.off, inst.on, inst.pause);
   // factor
   return inst.container;
-};
+}
 
 /*****************************************************************************/
 
-const board = Scoreboard();  // initialize board first global dependency !
-// we need Scoreboard().height to correctly position other objects
+// init - we need Scoreboard().height to correctly position other objects
+const board = Scoreboard();
 
 /*****************************************************************************/
 
 // Map01 factory - should we add an exit button to maps???
-const Map01 = (app=base) => {
+function Map01() {
   // Returns a new instance of the Map01 screen.
   const inst = {
     container : new PIXI.Container(),
@@ -417,7 +417,7 @@ const Map01 = (app=base) => {
   // position background layers
   inst.far.position.set(0, 0);
   inst.mid.anchor.set(0, 1);
-  inst.mid.position.set(0, app.renderer.height - board.height);
+  inst.mid.position.set(0, base.renderer.height - board.height);
   // swipe/drag event listeners
   inst.container.interactive = true;
   inst.container.pointerdown = function(e) {
@@ -445,7 +445,7 @@ const Map01 = (app=base) => {
   inst.container.addChild(inst.far, inst.mid);
   // factor
   return inst.container;
-};
+}
 
 /*****************************************************************************/
 
@@ -455,7 +455,7 @@ const map01 = Map01();
 /*****************************************************************************/
 
 // Levels screen factory
-const Levels = (app=base.renderer) => {
+function Levels(app=base.renderer) {
   // Returns a new instance of the Levels screen.
   const inst = {
     container : new PIXI.Container(),
@@ -506,7 +506,9 @@ const Levels = (app=base.renderer) => {
     window.setTimeout(() => {
       this.scale.set(1);
       STORE.LEVEL = 1;
-      clearAndStage(map01, new Chick(), new Fool(), new Goon(), board);
+      clearAndStage(map01, 
+                    new Chick(), new Fool(), new Cock(), new Goon(), 
+                    board);
     }, 200); 
   };
   inst.play02.pointerdown = function(e) {
@@ -522,12 +524,15 @@ const Levels = (app=base.renderer) => {
                            inst.level02, inst.play02, inst.exit);
   // factor
   return inst.container;
-};
+}
 
 /*****************************************************************************/
 
+// initialize level screen
+const levels = Levels();
+
 // Returns a pseudo random integer within viewport dimensions
-const getRandomInt = (dimension, offset_bottom=0) => {
+function getRandomInt(dimension, offset_bottom=0) {
   // @param {string} dimension 'width' or 'height'
   // @param {unsigned integer} offset_bottom
   const min = 0;
@@ -535,16 +540,16 @@ const getRandomInt = (dimension, offset_bottom=0) => {
                 window.innerWidth : 
                 window.innerHeight - board.height - offset_bottom;
   return Math.floor(Math.random() * (max - min + 1)) + min;
-};
+}
 
 /*****************************************************************************/
 
 // Blood factory
-const Blood = () => {
+function Blood() {
   const b = new PIXI.Graphics().beginFill(0xff0000).drawCircle(0, 0, 10).endFill();
   b.visible = false;
   return b;
-};
+}
 
 /*****************************************************************************/
 
@@ -828,9 +833,9 @@ Cock.prototype.onFrameChange = function(index) {  // index of current frame in a
 /*****************************************************************************/
 
 // Helper: is x in range min...max?
-const inRange = (x, min, max) => {
+function inRange(x, min, max) {
   return x >= min && x <= max;
-};
+}
 
 /*****************************************************************************/
 
@@ -912,9 +917,9 @@ Bullet.prototype.pointerdown = function(e) {
 /*****************************************************************************/
 
 // Returns a pseudo random integer in a range (both min and max are inclusive)
-const getRandomIntInRange = (min, max) => {
+function getRandomIntInRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
-};
+}
 
 /*****************************************************************************/
 
