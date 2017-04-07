@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <title>Chicken Chop</title>
+  <style>* {padding: 0; margin: 0; font-size: 16px;}</style>
+  <script src="js/pixi.js"></script>
+  <script src="js/PixiTextInput.js"></script>
+  <script>
+    window.WebFontConfig = {
+      google: {families: ['Press Start 2P']},
+      fontactive(fontFamily, fontDescription) {  // case font loaded
+        const s = window.document.createElement('script');
+        s.src = 'js/chickenchop_classy.js';
+        window.document.head.appendChild(s);
+      },
+      inactive() {  // case no browser support or fonts not loaded
+        window.alert('Font load error: Please reload this webpage.');
+      }
+    };
+  </script>
+  <script src="js/webfont.js"></script>
+</head>
+<body>
+
+</body>
+</html>
