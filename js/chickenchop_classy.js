@@ -137,11 +137,10 @@ function clearAndStage(...newChildren) {  // rest parameters
 /*****************************************************************************/
 
 // Stoper/Stager
-function stopAndStage(disablePause=true, ...newChildren) {
+function stopAndStage(...newChildren) {
   // Stops all staged animated sprites and stages new children.
-  if (disablePause) {
-    board.children.filter(c => c.text === 'PAUSE')[0].interactive = false;
-  }
+  // disable pause button
+  board.children.filter(c => c.text === 'PAUSE')[0].interactive = false;
   base.stage.children.forEach(c => {
     if (c.chicken || c.bullet) {
       c.stop();
@@ -154,11 +153,10 @@ function stopAndStage(disablePause=true, ...newChildren) {
 /*****************************************************************************/
 
 // Player/Unstager
-function playAndUnstage(enablePause=true, ...oldChildren) {
+function playAndUnstage(...oldChildren) {
   // Plays all staged animated sprites and unstages old children.
-  if (enablePause) {
-    board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
-  }
+  // enable pause button
+  board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
   base.stage.children.forEach(c => {
     if (c.chicken || c.bullet) {
       c.play();
@@ -249,7 +247,7 @@ function Start(app=base.renderer) {
   };
   // add elements to inst.container
   inst.container.addChild(inst.chop, inst.text, inst.input, inst.start,
-                           inst.exit);
+                          inst.exit);
   // factor
   return inst.container;
 }
@@ -287,7 +285,7 @@ function Pause(app=base.renderer) {
     this.scale.set(0.98);
     window.setTimeout(() => {
       this.scale.set(1);
-      playAndUnstage(true, this.parent);
+      playAndUnstage(this.parent);
     }, 200); 
   };
   // add elements to inst.container
@@ -349,7 +347,7 @@ function Scoreboard(app=base.renderer) {
     this.scale.set(0.98);
     window.setTimeout(() => {
       this.scale.set(1);
-      stopAndStage(true, pause);
+      stopAndStage(pause);
     }, 200); 
   };
   // add elements to inst.container
@@ -1017,7 +1015,8 @@ Goon.prototype.pointerdown = function(e) {
 // animation logic/movement
 Goon.prototype.onFrameChange = function(index) {  // index of current frame in array
   this.changecount++;
-  if (this.changecount % 20 === 0) {
+  if (this.changecount % 20 === 0 &&
+      inRange(this.x, 0, window.innerWidth)) {
     base.stage.addChildAt(new Bullet(this.x, this.y),
                           base.stage.children.length - 1);
   }
