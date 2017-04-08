@@ -1,4 +1,4 @@
-/* chickenchop.js */
+// chickenchop_classy.js
 
 'use strict';
 
@@ -108,45 +108,6 @@ function App() {
   app.renderer.view.style.display = 'block';
   app.renderer.autoResize = true;
   app.renderer.resize(window.innerWidth, window.innerHeight);
-  // holds swipe/drag data
-  const swipe = {
-    start  : 0, 
-    end    : 0,
-    length : 0 
-  };
-  // swipe/drag event listeners
-  app.stage.interactive = true;
-  app.stage.pointerdown = function(e) {
-    swipe.start = e.data.getLocalPosition(this).x;
-  };
-  app.stage.pointerup = function(e) {
-    swipe.end = e.data.getLocalPosition(this).x;
-    swipe.length = swipe.start - swipe.end;
-    if (Math.abs(swipe.length) > 5) {
-      // only adjusting chickens' and bullet's x on swipe */
-      app.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
-          c.x -= swipe.length;
-        }
-      });
-    }
-  };
-  // key event listeners
-  window.document.addEventListener('keydown', e => {
-    if (e.keyCode === 37 || e.keyCode === 65) {
-      app.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
-          c.x += 4;
-        }
-      });
-    } else if (e.keyCode === 39 || e.keyCode === 68) {
-      app.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
-          c.x -= 4;
-        }
-      });
-    }
-  });
   // factor
   return app;
 }
@@ -161,10 +122,9 @@ const base = App();
 // Clearer/Stager
 function clearAndStage(...newChildren) {  // rest parameters
   // Clears the entire stage and adds new children.
-  // disabling updateTransform()
   base.stage.children
     .filter(c => c.chicken || c.bullet)
-    .forEach(c => {
+    .forEach(c => {  // disabling updateTransform()
       c.renderable = c.visible = c.interactive = c.loop = false;
       c.destroy();
   });
@@ -176,8 +136,43 @@ function clearAndStage(...newChildren) {  // rest parameters
 
 /*****************************************************************************/
 
+// Stoper/Stager
+function stopAndStage(disablePause=true, ...newChildren) {
+  // Stops all staged animated sprites and stages new children.
+  if (disablePause) {
+    board.children.filter(c => c.text === 'PAUSE')[0].interactive = false;
+  }
+  base.stage.children.forEach(c => {
+    if (c.chicken || c.bullet) {
+      c.stop();
+      c.interactive = false;
+    }
+  });
+  base.stage.addChild(...newChildren);
+}
+
+/*****************************************************************************/
+
+// Player/Unstager
+function playAndUnstage(enablePause=true, ...oldChildren) {
+  // Plays all staged animated sprites and unstages old children.
+  if (enablePause) {
+    board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
+  }
+  base.stage.children.forEach(c => {
+    if (c.chicken || c.bullet) {
+      c.play();
+      c.interactive = true;
+    }
+  });
+  base.stage.removeChild(...oldChildren);
+}
+
+/*****************************************************************************/
+
 // Sets stores
 function setLocalStores(s) {
+  // Should save given name in a cookie/localStorage and a global.
   window.localStorage.setItem('chickenchop', s);
   STORE.NAME = s;
 }
@@ -186,6 +181,7 @@ function setLocalStores(s) {
 
 // Gets localStorage
 function getLocalStorage() {
+  // Should try to read name from cookie/localStorage.
   const name = window.localStorage.getItem('chickenchop');
   return name === null ? '' : name;
 }
@@ -202,8 +198,8 @@ function Start(app=base.renderer) {
                               FONT.L),
     text      : new PIXI.Text('Enter your name!',
                               window.innerWidth < 370 ? FONT.XS : FONT.S),
-    /* 3rd param to input is a func getting called when enter is pressed
-       gets passed the text input's text value */
+    // 3rd param to input is a func getting called when enter is pressed
+    // gets passed the text input's text value
     input     : new PixiTextInput(getLocalStorage(), FONT.S, 
                                   s => {
                                     setLocalStores(s);
@@ -272,11 +268,11 @@ function Pause(app=base.renderer) {
   // position text
   inst.text
     .position.set(app.width / 2 - inst.text.width / 2,
-                  app.height / 2 - inst.text.height);
+                  app.height / 3 - inst.text.height);
   // position buttons
   inst.play
     .position.set(app.width / 2 - inst.play.width / 2,
-                  app.height / 2 + 2 * inst.play.height);
+                  app.height / 3 + inst.text.height);
   inst.exit
     .position.set(app.width - inst.exit.width - 10, inst.exit.height / 2);
   // make buttons interactive
@@ -291,7 +287,7 @@ function Pause(app=base.renderer) {
     this.scale.set(0.98);
     window.setTimeout(() => {
       this.scale.set(1);
-      endPause(this.parent);
+      playAndUnstage(true, this.parent);
     }, 200); 
   };
   // add elements to inst.container
@@ -302,34 +298,8 @@ function Pause(app=base.renderer) {
 
 /*****************************************************************************/
 
-// pause screen
+// initialize pause screen
 const pause = Pause();
-
-/*****************************************************************************/
-
-// Pause screen helper
-function startPause(pause) {
-  base.stage.children.forEach(c => {
-    if (c.chicken || c.bullet) {
-      c.stop();
-      c.interactive = false;
-    }
-  });
-  base.stage.addChild(pause);
-}
-
-/*****************************************************************************/
-
-// Pause screen helper
-function endPause(pause) {
-  base.stage.children.forEach(c => {
-    if (c.chicken || c.bullet) {
-      c.play();
-      c.interactive = true;
-    }
-  });
-  base.stage.removeChild(pause);
-}
 
 /*****************************************************************************/
 
@@ -379,7 +349,7 @@ function Scoreboard(app=base.renderer) {
     this.scale.set(0.98);
     window.setTimeout(() => {
       this.scale.set(1);
-      startPause(pause);
+      stopAndStage(true, pause);
     }, 200); 
   };
   // add elements to inst.container
@@ -429,16 +399,31 @@ function Map01() {
     if (Math.abs(swipe.length) > 5) {
       inst.far.tilePosition.x -= swipe.length / 2;
       inst.mid.tilePosition.x -= swipe.length;
+      base.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x -= swipe.length;
+        } 
+      });
     }
   };
-  // key event listeners - keydown listener was registered with App() -
+  // key event listeners
   window.document.onkeydown = e => {
     if (e.keyCode === 37 || e.keyCode === 65) {
       inst.far.tilePosition.x += 2;
       inst.mid.tilePosition.x += 4;
+      base.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x += 4;
+        } 
+      });
     } else if (e.keyCode === 39 || e.keyCode === 68) {
       inst.far.tilePosition.x -= 2;
       inst.mid.tilePosition.x -= 4;
+      base.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x -= 4;
+        } 
+      });
     }
   };
   // add background layers to inst.container
@@ -521,7 +506,7 @@ function Levels(app=base.renderer) {
   };
   // add elements to inst.container
   inst.container.addChild(inst.text, inst.level01, inst.play01,
-                           inst.level02, inst.play02, inst.exit);
+                          inst.level02, inst.play02, inst.exit);
   // factor
   return inst.container;
 }
@@ -530,6 +515,43 @@ function Levels(app=base.renderer) {
 
 // initialize level screen
 const levels = Levels();
+
+/*****************************************************************************/
+
+function End(app=base.renderer) {
+  // Returns a new instance of the end screen.
+  const inst = {
+    container : new PIXI.Container(),
+    info      : new PIXI.Text(`You${window.innerWidth < 370 ? '\n' : ' '}` + 
+                              `${STORE.HEALTH < 1 ? 'lost!' : 'won!'}`, FONT.L),
+    score     : new PIXI.Text(`Score: ${STORE.SCORE}`, FONT.M),
+    exit      : new PIXI.Text('EXIT', FONT.M)
+  };
+  // position info
+  inst.info
+    .position.set(app.width / 2 - inst.info.width / 2,
+                  app.height / 3 - inst.info.height);
+  // position score
+  inst.score
+    .position.set(app.width / 2 - inst.score.width / 2,
+                  app.height / 3 + inst.info.height);
+  // position button
+  inst.exit
+    .position.set(app.width - inst.exit.width - 10, inst.exit.height / 2);
+  // make button interactive
+  inst.exit.interactive = inst.exit.buttonMode = true;
+  // define pointer handler
+  inst.exit.pointerdown = function(e) {
+    this.scale.set(0.98);
+    window.setTimeout(() => this.scale.set(1), 200); 
+  };
+  // add to inst.container
+  inst.container.addChild(inst.info, inst.score, inst.exit);
+  // factor
+  return inst.container;
+}
+
+/*****************************************************************************/
 
 // Returns a pseudo random integer within viewport dimensions
 function getRandomInt(dimension, offset_bottom=0) {
@@ -561,10 +583,8 @@ function Chick() {
     this,
     Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Chick.texture))
   );
-  /*
-     deleting 'onFrameChange' instance property so that its lookup is 
-     delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
-  */
+  // deleting 'onFrameChange' instance property so that its lookup is 
+  // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
   delete this.onFrameChange;
   delete this.pointerdown;
   delete this.animationSpeed;
@@ -654,10 +674,8 @@ function Fool() {
     this,
     Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Fool.texture))
   );
-  /*
-     deleting 'onFrameChange' instance property so that its lookup is 
-     delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
-  */
+  // deleting 'onFrameChange' instance property so that its lookup is 
+  // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
   delete this.onFrameChange;
   delete this.pointerdown;
   delete this.animationSpeed;
@@ -747,10 +765,8 @@ function Cock() {
     this,
     Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Cock.texture))
   );
-  /*
-     deleting 'onFrameChange' instance property so that its lookup is 
-     delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
-  */
+  // deleting 'onFrameChange' instance property so that its lookup is 
+  // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
   delete this.onFrameChange;
   delete this.pointerdown;
   delete this.animationSpeed;
@@ -849,10 +865,8 @@ function Bullet(x, y) {
       new PIXI.extras.AnimatedSprite([Bullet.texture, Bullet.texture])
     )
   );
-  //
   // deleting instance properties so that their lookup is delegated to 
   // their prototype
-  //
   delete this.onFrameChange;
   delete this.pointerdown;
   delete this.animationSpeed;
@@ -931,10 +945,8 @@ function Goon() {
     this,
     Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Goon.texture))
   );
-  /*
-     deleting 'onFrameChange' instance property so that its lookup is 
-     delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
-  */
+  // deleting 'onFrameChange' instance property so that its lookup is 
+  // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
   delete this.onFrameChange;
   delete this.pointerdown;
   delete this.animationSpeed;
@@ -1015,23 +1027,21 @@ Goon.prototype.onFrameChange = function(index) {  // index of current frame in a
 
 // Rendering empty stage first to avoid flickery!
 base.renderer.render(base.stage);
+
 // put something on stage to render
-/*
-  try not to save any enemy variables?
-  Only initalize chickens in a call to base.stage.addChild(...)
-    -> guarantees they always have a parent, can be unstaged
-*/
-base.stage.addChild(board);  // Start()
+// try not to save any enemy variables?
+// Only initalize chickens in a call to base.stage.addChild(...)
+// -> guarantees they always have a parent, can be unstaged
+//base.stage.addChild();  // Start()
+
 // add application view to DOM
 window.document.body.appendChild(base.view);
 
 /*****************************************************************************/
 
-/*
-  right now there can only be one GoonChicken and one Bullet 
-  instance on stage at once... ... working on it ...
-  endgegner style
-*/
+// right now there can only be one GoonChicken and one Bullet 
+// instance on stage at once... ... working on it ...
+
 
 
 /*
@@ -1397,6 +1407,48 @@ const GoonChicken = (board_height=BOARD_HEIGHT) => {
   // factor
   return Object.create(proto);
 };
+*/
+
+/* extracted from App factory
+  // holds swipe/drag data
+  const swipe = {
+    start  : 0, 
+    end    : 0,
+    length : 0 
+  };
+  // swipe/drag event listeners
+  app.stage.interactive = true;
+  app.stage.pointerdown = function(e) {
+    swipe.start = e.data.getLocalPosition(this).x;
+  };
+  app.stage.pointerup = function(e) {
+    swipe.end = e.data.getLocalPosition(this).x;
+    swipe.length = swipe.start - swipe.end;
+    if (Math.abs(swipe.length) > 5) {
+      // only adjusting chickens' and bullet's x on swipe
+      app.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x -= swipe.length;
+        }
+      });
+    }
+  };
+  // key event listeners
+  window.document.addEventListener('keydown', e => {
+    if (e.keyCode === 37 || e.keyCode === 65) {
+      app.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x += 4;
+        }
+      });
+    } else if (e.keyCode === 39 || e.keyCode === 68) {
+      app.stage.children.forEach(c => {
+        if ((c.chicken || c.bullet) && c.renderable) {
+          c.x -= 4;
+        }
+      });
+    }
+  });
 */
 
 /*
