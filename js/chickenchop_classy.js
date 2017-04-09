@@ -123,7 +123,7 @@ const base = App();
 function clearAndStage(...newChildren) {  // rest parameters
   // Clears the entire stage and adds new children.
   base.stage.children
-    .filter(c => c.chicken || c.bullet)
+    .filter(c => c.chicken || c.bullet || c.bucket)
     .forEach(c => {  // disabling updateTransform()
       c.renderable = c.visible = c.interactive = c.loop = false;
       c.destroy();
@@ -141,11 +141,11 @@ function stopAndStage(...newChildren) {
   // Stops all staged animated sprites and stages new children.
   // disable pause button
   board.children.filter(c => c.text === 'PAUSE')[0].interactive = false;
-  base.stage.children.forEach(c => {
-    if (c.chicken || c.bullet) {
+  base.stage.children
+    .filter(c => c.chicken || c.bullet || c.bucket)
+    .forEach(c => {
       c.stop();
       c.interactive = false;
-    }
   });
   base.stage.addChild(...newChildren);
 }
@@ -155,14 +155,14 @@ function stopAndStage(...newChildren) {
 // Player/Unstager
 function playAndUnstage(...oldChildren) {
   // Plays all staged animated sprites and unstages old children.
-  // enable pause button
-  board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
-  base.stage.children.forEach(c => {
-    if (c.chicken || c.bullet) {
+  base.stage.children
+    .filter(c => c.chicken || c.bullet || c.bucket)
+    .forEach(c => {
       c.play();
       c.interactive = true;
-    }
   });
+  // enable pause button
+  board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
   base.stage.removeChild(...oldChildren);
 }
 
@@ -398,7 +398,7 @@ function Map01() {
       inst.far.tilePosition.x -= swipe.length / 2;
       inst.mid.tilePosition.x -= swipe.length;
       base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
+        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
           c.x -= swipe.length;
         } 
       });
@@ -410,7 +410,7 @@ function Map01() {
       inst.far.tilePosition.x += 2;
       inst.mid.tilePosition.x += 4;
       base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
+        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
           c.x += 4;
         } 
       });
@@ -418,7 +418,7 @@ function Map01() {
       inst.far.tilePosition.x -= 2;
       inst.mid.tilePosition.x -= 4;
       base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet) && c.renderable) {
+        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
           c.x -= 4;
         } 
       });
@@ -579,7 +579,8 @@ function Chick() {
   // define all OWN properties of 2nd param directly on Chick instance
   Object.defineProperties(
     this,
-    Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Chick.texture))
+    Object.getOwnPropertyDescriptors(new PIXI.extras
+                                     .AnimatedSprite(Chick.texture))
   );
   // deleting 'onFrameChange' instance property so that its lookup is 
   // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
@@ -670,7 +671,8 @@ function Fool() {
   // define all OWN properties of 2nd param directly on Fool instance
   Object.defineProperties(
     this,
-    Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Fool.texture))
+    Object.getOwnPropertyDescriptors(new PIXI.extras
+                                     .AnimatedSprite(Fool.texture))
   );
   // deleting 'onFrameChange' instance property so that its lookup is 
   // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
@@ -761,7 +763,8 @@ function Cock() {
   // define all OWN properties of 2nd param directly on Cock instance
   Object.defineProperties(
     this,
-    Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Cock.texture))
+    Object.getOwnPropertyDescriptors(new PIXI.extras
+                                     .AnimatedSprite(Cock.texture))
   );
   // deleting 'onFrameChange' instance property so that its lookup is 
   // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
@@ -941,7 +944,8 @@ function Goon() {
   // define all OWN properties of 2nd param directly on Goon instance
   Object.defineProperties(
     this,
-    Object.getOwnPropertyDescriptors(new PIXI.extras.AnimatedSprite(Goon.texture))
+    Object.getOwnPropertyDescriptors(new PIXI.extras
+                                     .AnimatedSprite(Goon.texture))
   );
   // deleting 'onFrameChange' instance property so that its lookup is 
   // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
@@ -1019,6 +1023,71 @@ Goon.prototype.onFrameChange = function(index) {  // index of current frame in a
       inRange(this.x, 0, window.innerWidth)) {
     base.stage.addChildAt(new Bullet(this.x, this.y),
                           base.stage.children.length - 1);
+  }
+};
+
+/*****************************************************************************/
+
+// Bucket constructor
+function Bucket() {
+  // Returns a new Bucket instance.
+  // define all OWN properties of 2nd param directly on Bucket instance
+  Object.defineProperties(
+    this,
+    Object.getOwnPropertyDescriptors(new PIXI.extras
+                                     .AnimatedSprite(Bucket.texture))
+  );
+  // deleting 'onFrameChange' instance property so that its lookup is 
+  // delegated to its prototype; same with 'pointerdown' and 'animationSpeed'
+  delete this.onFrameChange;
+  delete this.pointerdown;
+  delete this.animationSpeed;
+  // position
+  this
+    .position.set(getRandomInt('width'), 0 - this.height);
+  // define rendering properties on each instance
+  this.renderable = this.visible = this.interactive = this.loop = true;
+  // start animation when initalized
+  this.play();
+}
+
+// Bucket class properties (static)
+Bucket.texture = ['./img/one.png', './img/one.png']
+                  .map(i => PIXI.Texture.fromImage(i));
+// health u gain when collecting bucket
+Bucket.power = 25;
+Bucket.prototype = new PIXI.extras.AnimatedSprite(Bucket.texture);
+
+// Bucket prototype properties
+// explicetly reset Bucket constructor
+Bucket.prototype.constructor = Bucket;
+// mark as button
+Bucket.prototype.bucket = true;
+// common size
+[Bucket.prototype.width, Bucket.prototype.height] = [100, 100];
+// common animation speed
+Bucket.prototype.animationSpeed = .04;
+
+// Bucket prototype methods
+Bucket.prototype.interactive = true;
+Bucket.prototype.pointerdown = function(e) {
+  STORE.HEALTH += Bucket.power;
+  board.children[0].text = 
+    `Score: ${STORE.SCORE} Health: ${STORE.HEALTH}`;
+  // let the bucket disappear ... clean up
+  this.renderable = this.visible = this.interactive = this.loop = false;
+  this.parent.removeChild(this);  // unstage
+  this.destroy();  // clean up destroy bucket instance
+};
+// animation logic
+Bucket.prototype.onFrameChange = function(index) {  // index of current frame in array
+  this.y += 4;
+  if (this.y >= window.innerHeight - board.height - this.height ||
+      !inRange(this.x, 0 - this.width, window.innerWidth + this.width)) {
+    // let the bucket disappear ... clean up
+    this.renderable = this.visible = this.interactive = this.loop = false;
+    this.parent.removeChild(this);  // unstage
+    this.destroy();  // clean up destroy bucket instance  
   }
 };
 
