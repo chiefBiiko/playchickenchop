@@ -127,7 +127,7 @@ function clearAndStage(...newChildren) {  // rest parameters
     .forEach(c => {  // disabling updateTransform()
       c.renderable = c.visible = c.interactive = c.loop = false;
       c.destroy();
-  });
+    });
   // clear stage
   base.stage.removeChildren();
   // add new children
@@ -146,8 +146,8 @@ function stopAndStage(...newChildren) {
     .forEach(c => {
       c.stop();
       c.interactive = false;
-  });
-  base.stage.addChild(...newChildren);
+    });
+  if (newChildren.length > 0) base.stage.addChild(...newChildren);
 }
 
 /*****************************************************************************/
@@ -160,10 +160,10 @@ function playAndUnstage(...oldChildren) {
     .forEach(c => {
       c.play();
       c.interactive = true;
-  });
+    });
   // enable pause button
   board.children.filter(c => c.text === 'PAUSE')[0].interactive = true;
-  base.stage.removeChild(...oldChildren);
+  if (oldChildren.length > 0) base.stage.removeChild(...oldChildren);
 }
 
 /*****************************************************************************/
@@ -1103,9 +1103,6 @@ base.renderer.render(base.stage);
 window.document.body.appendChild(base.view);
 
 /*****************************************************************************/
-
-// right now there can only be one GoonChicken and one Bullet 
-// instance on stage at once... ... working on it ...
 
 
 
