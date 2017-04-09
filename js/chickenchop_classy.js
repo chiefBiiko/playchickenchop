@@ -397,11 +397,9 @@ function Map01() {
     if (Math.abs(swipe.length) > 5) {
       inst.far.tilePosition.x -= swipe.length / 2;
       inst.mid.tilePosition.x -= swipe.length;
-      base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
-          c.x -= swipe.length;
-        } 
-      });
+      base.stage.children
+        .filter(c => (c.chicken || c.bullet || c.bucket) && c.renderable)
+        .forEach(c => c.x -= swipe.length);
     }
   };
   // key event listeners
@@ -409,19 +407,15 @@ function Map01() {
     if (e.keyCode === 37 || e.keyCode === 65) {
       inst.far.tilePosition.x += 2;
       inst.mid.tilePosition.x += 4;
-      base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
-          c.x += 4;
-        } 
-      });
+      base.stage.children
+        .filter(c => (c.chicken || c.bullet || c.bucket) && c.renderable)
+        .forEach(c => c.x += 4);
     } else if (e.keyCode === 39 || e.keyCode === 68) {
       inst.far.tilePosition.x -= 2;
       inst.mid.tilePosition.x -= 4;
-      base.stage.children.forEach(c => {
-        if ((c.chicken || c.bullet || c.bucket) && c.renderable) {
-          c.x -= 4;
-        } 
-      });
+      base.stage.children
+        .filter(c => (c.chicken || c.bullet || c.bucket) && c.renderable)
+        .forEach(c => c.x -= 4);
     }
   };
   // add background layers to inst.container
@@ -566,8 +560,11 @@ function getRandomInt(dimension, offset_bottom=0) {
 
 // Blood factory
 function Blood() {
-  const b = new PIXI.Graphics().beginFill(0xff0000).drawCircle(0, 0, 10).endFill();
-  b.visible = false;
+  const b = new PIXI.Graphics()
+    .beginFill(0xff0000)
+    .drawCircle(0, 0, 5)
+    .endFill();
+  b.visible = false;  // making it visible once its been positioned on chicken
   return b;
 }
 
